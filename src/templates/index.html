@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>DRF Sample</title>
+  <!-- CSS -->
+  <!-- Vuetify -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
+  />
+  <style>
+    #message {
+      min-height: 110px;
+    }
+    .v-btn {
+      text-transform: none;
+    }
+    [v-cloak] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <v-app>
+    <!-- ヘッダ -->
+    <v-app-bar id="header" color="grey-darken-4">
+      <v-app-bar-title>
+        <v-btn href="/">DRF Sample</v-btn>
+      </v-app-bar-title>
+      <template v-slot:append>
+        {% if user.is_authenticated %}
+        <v-btn>
+          {{ user.get_username }}
+          <v-menu activator="parent">
+            <v-list>
+              <v-list-item>
+                <v-list-item-title>
+                  <v-form
+                    action="{% url 'rest_framework:logout' %}"
+                    method="post"
+                  >
+                    {% csrf_token %}
+                    <v-btn variant="flat" type="submit">ログアウト</v-btn>
+                  </v-form>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-btn>
+        {% else %}
+        <v-btn href="{% url 'rest_framework:login' %}">ログイン</v-btn>
+        {% endif %}
+      </template>
+    </v-app-bar>
+
+    <v-main>
+      <!-- メッセージ -->
+      <v-container id="message">
+        <v-alert type="error" density="comfortable" v-show="errorMessage">
+          ${ errorMessage }
+        </v-alert>
+        <v-alert
+          type="warning"
+          density="comfortable"
+          v-show="warningMessages.length > 0"
+        >
+          <p v-for="warningMessage in warningMessages" :key="warningMessage">
+            ${ warningMessage }
+          </p>
+        </v-alert>
+        <v-alert type="info" density="comfortable" v-show="infoMessage">
+          ${ infoMessage }
+        </v-alert>
+      </v-container>
+
+      <!-- 入力フォーム -->
+      <v-container id="form">
+        <v-card class="mx-auto pa-8" elevation="4" width="600">
+          <v-card-title class="mb-8">ホーム</v-card-title>
+
+          <v-card-text>
+            <v-form>
+              <v-text-field v-model="bookTitle" label="タイトル"></v-text-field>
+              <v-text-field v-model="bookPrice" label="価格"></v-text-field>
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-btn
+              variant="elevated"
+              color="success"
+              class="mx-auto"
+              @click="submitSave"
+            >
+              ${ isCreated ? '更新' : '登録' }
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-container>
+
+      <!-- デバッグ -->
+      <v-container id="debug">
+        <pre>
+bookTitle: ${ bookTitle }
+bookPrice: ${ bookPrice }
+bookId: ${ bookId }
+errorMessage: ${ errorMessage }
+warningMessages: ${ warningMessages }
+infoMessage: ${ infoMessage }
+isCreated: ${ isCreated }
+        </pre>
+      </v-container>
+    </v-main>
+  </v-app>
+</div>
+
+<!-- JavaScript -->
+<!-- Vue -->
+<script src="https://unpkg.com/vue@3.2.45/dist/vue.global.prod.js"></script>
+<!-- Vuetify -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=IntersectionObserver,ResizeObserver,WebAnimations,Object.fromEntries,Array.prototype.at"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+<!-- axios -->
+<script src="https://unpkg.com/axios@1.2.2/dist/axios.min.js"></script>
+
+<script>
+// グローバルAPIの関数を定義
+const { createApp, ref, computed } = Vue;
+const { createVuetify } = Vuetify;
+
+// CSRFトークンの送信設定
+axios.defaults.xsrfCookieName = "csrftoken";
+axios.defaults.xsrfHeaderName = "X-CSRFToken";
+
+// APIクライアント
+const api = axios.create({
+  baseURL: "/api/v1/",
+  timeout: 5000,
+  headers: {
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  },
+});
+
+// Vueインスタンスを作成
+const app = createApp({
+  setup() {
+    // タイトル
+    const bookTitle = ref("");
+    // 価格
+    const bookPrice = ref(0);
+    // 更新時に利用する本のID（デフォルト値はundefined）
+    const bookId = ref();
+    // メッセージエリアに表示するメッセージ
+    const errorMessage = ref("");
+    const warningMessages = ref([]);
+    const infoMessage = ref("");
+
+    // 本が登録済みかどうか
+    const isCreated = computed(() => {
+      return bookId.value !== undefined;
+    });
+
+    // メッセージクリア
+    const clearMessages = () => {
+      errorMessage.value = "";
+      warningMessages.value = [];
+      infoMessage.value = "";
+    };
+    // 登録・更新ボタン押下時に呼び出されるメソッド
+    const submitSave = () => {
+      clearMessages();
+      api({
+        // 登録済みかどうかでHTTPメソッドとエンドポイントを切り替える
+        method: isCreated.value ? "put" : "post",
+        url: isCreated.value ? "/books/" + bookId.value + "/" : "/books/",
+        data: {
+          id: bookId.value,
+          title: bookTitle.value,
+          price: bookPrice.value,
+        },
+      })
+        .then((response) => {
+          // リアクティブなデータを更新
+          infoMessage.value = isCreated.value
+            ? "更新しました。"
+            : "登録しました。";
+          bookId.value = response.data.id;
+          bookTitle.value = response.data.title;
+          bookPrice.value = response.data.price;
+        })
+        .catch((error) => {
+          // エラーの種類に応じたハンドリングをおこなう
+          switch (error.response?.status) {
+            // バリデーションNG
+            case 400:
+              // オブジェクトのプロパティの値（メッセージの配列）をフラットな配列に変換
+              const messages = Object.values(error.response.data).flat();
+              warningMessages.value = messages;
+              break;
+            // 認証エラー
+            case 401:
+              errorMessage.value = "認証エラー";
+              break;
+            // 権限エラー
+            case 403:
+              errorMessage.value = "権限エラーです。";
+              break;
+            // その他のエラー
+            default:
+              errorMessage.value = "想定外のエラーです。";
+          }
+        });
+    };
+    return {
+      bookTitle,
+      bookPrice,
+      errorMessage,
+      warningMessages,
+      infoMessage,
+      isCreated,
+      submitSave,
+      // デバッグ用
+      bookId,
+    };
+  },
+});
+// Mustache構文のバッティングを回避
+app.config.compilerOptions.delimiters = ["${", "}"];
+// Vuetifyをインストール
+const vuetify = createVuetify();
+app.use(vuetify);
+app.mount("#app");
+</script>
+</body>
+</html>
