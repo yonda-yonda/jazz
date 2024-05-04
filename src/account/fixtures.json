@@ -1,0 +1,121 @@
+[
+{
+  "model": "account.service",
+  "pk": "c9ede6bf-38a1-4851-bad9-c0371415120d",
+  "fields": {
+    "name": "サービスB"
+  }
+},
+{
+  "model": "account.service",
+  "pk": "f02f083a-ad34-4e60-9044-d1f4a1a80928",
+  "fields": {
+    "name": "サービスA"
+  }
+},
+{
+  "model": "account.organization",
+  "pk": "22fe2336-aa2b-451b-a074-0e7a59698a29",
+  "fields": {
+    "name": "組織B",
+    "services": []
+  }
+},
+{
+  "model": "account.organization",
+  "pk": "77a524e5-e1a0-4be2-9d4e-fe764e3ea718",
+  "fields": {
+    "name": "組織A",
+    "services": [
+      "f02f083a-ad34-4e60-9044-d1f4a1a80928"
+    ]
+  }
+},
+{
+  "model": "account.user",
+  "pk": "2f39f2ad-f2e6-41aa-b4c3-0fe7ed3134d4",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$SOcru1J7e4GuZ80q1Kj6YL$DSpeqFeGMwTv8Z2GWrrBKXel1I9UsxtJe8jhLtmPSpw=",
+    "last_login": "2024-05-04T09:22:43.107Z",
+    "is_superuser": true,
+    "email": "admin@example.com",
+    "username": "",
+    "is_active": true,
+    "is_staff": true,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "account.user",
+  "pk": "dac824ca-1f13-408d-bc6e-87d942c6c5bf",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$Cmdc5YbaEQukzQwqt6GrsT$vR1j+1j2jwQMJArHcxxvzVL7sf1KI1r9KUOb4S9yEU4=",
+    "last_login": "2024-05-04T09:23:46.070Z",
+    "is_superuser": false,
+    "email": "fuga@example.com",
+    "username": "",
+    "is_active": true,
+    "is_staff": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "account.user",
+  "pk": "e62e0aac-2895-4b0d-8b4e-fcfeed1fa833",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$zDDrEUz8maA2LmPlu7R88S$RQSU6B2yUgLgSyuutEZRkr5585ZGu+RYo2dw5s+WGAM=",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "piyo@example.com",
+    "username": "",
+    "is_active": true,
+    "is_staff": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "account.user",
+  "pk": "f1733caa-f125-43ce-b8f4-42ecd3f276df",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$hIYRcYZk7AZElOTzc1KYK8$EhTvcaQh+95+V+YJ4RF98d4aoUtpkKRhC+cUi+ENZ5k=",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "hoge@example.com",
+    "username": "",
+    "is_active": true,
+    "is_staff": false,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "account.membership",
+  "pk": "217120a2-c610-47d8-bbee-ca367d12370f",
+  "fields": {
+    "user": "e62e0aac-2895-4b0d-8b4e-fcfeed1fa833",
+    "organization": "22fe2336-aa2b-451b-a074-0e7a59698a29",
+    "role": null
+  }
+},
+{
+  "model": "account.membership",
+  "pk": "777da9f6-be5b-4c8b-bae0-8cf8f9bf5231",
+  "fields": {
+    "user": "f1733caa-f125-43ce-b8f4-42ecd3f276df",
+    "organization": "77a524e5-e1a0-4be2-9d4e-fe764e3ea718",
+    "role": "admin"
+  }
+},
+{
+  "model": "account.membership",
+  "pk": "d58d1116-a438-4dc7-9097-ce2071fb5bf7",
+  "fields": {
+    "user": "dac824ca-1f13-408d-bc6e-87d942c6c5bf",
+    "organization": "77a524e5-e1a0-4be2-9d4e-fe764e3ea718",
+    "role": null
+  }
+}
+]

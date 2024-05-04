@@ -38,8 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'api.apps.ApiConfig',
-    'shop.apps.ShopConfig',
+    'account.apps.AccountConfig',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +135,5 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 5,
 }
+
+AUTH_USER_MODEL = 'account.User'
