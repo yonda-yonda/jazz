@@ -8,7 +8,7 @@ class Service(models.Model):
     class Meta:
         db_table = 'service'
 
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
 
     def __str__(self):
@@ -18,7 +18,7 @@ class Organization(models.Model):
     class Meta:
         db_table = 'organization'
 
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     services = models.ManyToManyField(Service, blank=True)
 
@@ -49,7 +49,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(max_length=255, unique=True)
     username = models.CharField(max_length=255, blank=True)
     is_active = models.BooleanField(default=False)
@@ -71,7 +71,7 @@ class Membership(models.Model):
         ('admin', '管理者'),
     )
 
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     role = models.CharField(max_length=16, choices=ROLE, null=True, 

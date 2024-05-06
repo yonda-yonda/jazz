@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'account.apps.AccountConfig',
+    'v1.apps.V1Config',
 ]
 
 MIDDLEWARE = [
@@ -129,6 +131,10 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'rest_framework:login'
 
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
     ],
