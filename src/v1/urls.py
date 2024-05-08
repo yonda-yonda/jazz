@@ -20,4 +20,10 @@ urlpatterns = [
         'patch': 'partial_update',
         'delete': 'destroy'
     })),
+    path('organizations/<organization_id>/services/<service_id>/contract/', views.OrganizationServiceViewSet.as_view({
+        'post': 'create',
+    })),
+    path('organizations/<organization_id>/services/<service_id>/cancel/', views.OrganizationServiceViewSet.as_view({
+        'post': 'destroy',
+    })),
 ]

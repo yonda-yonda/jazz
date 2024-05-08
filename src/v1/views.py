@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, viewsets, serializers, status
+from rest_framework import generics, permissions, mixins, viewsets, serializers, status
 from rest_framework.response import Response
 
 from account.models import Service, Organization, User, Membership
@@ -8,7 +8,8 @@ from .serializer import (
     OrganizationMemberSerializer, 
     OrganizationMemberCreateSerializer,
     OrganizationMemberUpdateSerializer,
-    MembershipSerializer
+    MembershipSerializer,
+    EmptySerializer
 )
 from .permissions import IsOrganizationMember, IsOrganizationAdmin, IsUserSelf
 
@@ -61,9 +62,10 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
             user = User.objects.prefetch_related('membership').get(id=user_id)
         except User.DoesNotExist:
             raise serializers.ValidationError('User dosen\'t exist.')
+
         try:
             if user.membership:
-                raise serializers.ValidationError('User already has membership to any organization.')
+                return Response({'message':'User already has membership to any organization.'}, status=status.HTTP_409_CONFLICT)
         except Membership.DoesNotExist:
             serializer = MembershipSerializer(data={'role':role, 'organization': organization_id, 'user': user_id})
             serializer.is_valid(raise_exception=True)
@@ -96,3 +98,37 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
             'role': role
         }
         return Response(data)
+    
+class OrganizationServiceViewSet(viewsets.GenericViewSet):
+    permission_classes = (permissions.IsAdminUser | IsOrganizationMember,)
+    queryset = Organization.objects.prefetch_related('services').all()
+    serializer_class = EmptySerializer
+    lookup_url_kwarg = 'organization_id'
+
+    def create(self, request, *args, **kwargs):
+        service_id = self.request.parser_context['kwargs']['service_id']
+        filter_kwargs = {'id': service_id}
+        service = generics.get_object_or_404(Service.objects.all(), **filter_kwargs)
+
+        organization = self.get_object()
+        services = organization.services.all()
+        if services.filter(id=service_id).exists():
+            return Response(status=status.HTTP_409_CONFLICT)
+
+        organization.services.add(service)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, *args, **kwargs):
+        service_id = self.request.parser_context['kwargs']['service_id']
+        filter_kwargs = {'id': service_id}
+        service = generics.get_object_or_404(Service.objects.all(), **filter_kwargs)
+
+        organization = self.get_object()
+        services = organization.services.all()
+        if not services.filter(id=service_id).exists():
+            return Response(status=status.HTTP_409_CONFLICT)
+
+        organization.services.remove(service)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

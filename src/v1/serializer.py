@@ -52,3 +52,6 @@ class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = '__all__' 
+
+class EmptySerializer(serializers.Serializer):
+    pass
