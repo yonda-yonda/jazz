@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, mixins, viewsets, serializers, status
+from rest_framework import generics, permissions, viewsets, serializers, status
 from rest_framework.response import Response
 
 from account.models import Service, Organization, User, Membership
@@ -38,7 +38,7 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             premissions = (permissions.IsAdminUser | IsOrganizationAdmin | IsUserSelf,)
         return [permission() for permission in premissions]
-    
+
     def get_serializer_class(self, *args, **kwargs):
         if self.action == 'create':
             return OrganizationMemberCreateSerializer
@@ -98,7 +98,8 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
             'role': role
         }
         return Response(data)
-    
+
+
 class OrganizationServiceViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAdminUser | IsOrganizationMember,)
     queryset = Organization.objects.prefetch_related('services').all()
