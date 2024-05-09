@@ -18,7 +18,7 @@ class IsOrganizationAdmin(permissions.BasePermission):
         if isinstance(request.user, AnonymousUser): 
             return False
         try:
-            membership = Membership.objectss.prefetch_related('user', 'organization').get(user=request.user.id)
+            membership = Membership.objects.prefetch_related('user', 'organization').get(user=request.user.id)
             return str(membership.organization.id) == request.parser_context['kwargs']['organization_id'] and membership.role == 'admin'
         except:
             return False
