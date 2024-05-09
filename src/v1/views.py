@@ -19,16 +19,19 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ServiceSerializer
     lookup_url_kwarg = 'service_id'
 
-class OrganizationsRetrieveView(generics.ListAPIView):
-    permission_classes = (permissions.IsAdminUser,)
-    queryset = Organization.objects.all()
-    serializer_class = OrganizationSerializer
 
-class OrganizationRetrieveView(generics.RetrieveAPIView):
+class OrganizationRetrieveView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAdminUser | IsOrganizationMember,)
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
-    lookup_url_kwarg = 'organization_id'
+    lookup_url_kwarg = "organization_id"
+
+    def get_permissions(self):
+        premissions = (permissions.IsAdminUser,)
+        if self.action == "retrieve":
+            premissions = (permissions.IsAdminUser | IsOrganizationAdmin,)
+        return [permission() for permission in premissions]
+
 
 class OrganizationMemberViewSet(viewsets.ModelViewSet):
     lookup_url_kwarg = 'user_id'
