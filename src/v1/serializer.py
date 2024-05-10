@@ -43,20 +43,22 @@ class OrganizationMemberSerializer(serializers.ModelSerializer):
 
 
 class OrganizationMemberUpdateSerializer(serializers.Serializer):
+    id = serializers.UUIDField(format="hex_verbose", read_only=True)
+    email = serializers.EmailField(read_only=True)
     role = serializers.ChoiceField(
         choices=[role[0] for role in Membership.ROLE], allow_null=True, required=False
     )
 
 
-class OrganizationMemberCreateSerializer(OrganizationMemberUpdateSerializer):
+class OrganizationMemberCreateSerializer(serializers.Serializer):
     id = serializers.UUIDField(format="hex_verbose", required=True)
+    email = serializers.EmailField(read_only=True)
+    role = serializers.ChoiceField(
+        choices=[role[0] for role in Membership.ROLE], allow_null=True, required=False
+    )
 
 
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = "__all__"
-
-
-class EmptySerializer(serializers.Serializer):
-    pass

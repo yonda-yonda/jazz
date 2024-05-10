@@ -10,7 +10,6 @@ from .serializer import (
     OrganizationMemberCreateSerializer,
     OrganizationMemberUpdateSerializer,
     MembershipSerializer,
-    EmptySerializer,
 )
 from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsUserSelf
 
@@ -112,26 +111,27 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
-class OrganizationServiceViewSet(viewsets.GenericViewSet):
+class OrganizationServiceViewSet(viewsets.ViewSet):
     organization_pk = "organization_pk"
     service_pk = "pk"
 
     queryset = Service.objects.all()
-    serializer_class = EmptySerializer
 
     def get_permissions(self):
+        # check_object_permissionsはgeneric.GenericAPIView内で呼ばれるので、
+        # viewsets.ViewSetを直接継承する際はpremissionsがcheck_object_permissionsを
+        # 持っていないか注意する。
         premissions = (
             permissions.IsAdminUser | getIsOrganizationAdmin(self.organization_pk),
         )
         return [permission() for permission in premissions]
 
     def _get_model(self):
-        service = self.get_object()
+        service = generics.get_object_or_404(Service.objects.all(), id=self.service_pk)
 
         organization_id = self.request.parser_context["kwargs"][self.organization_pk]
-        filter_kwargs = {"id": organization_id}
         organization = generics.get_object_or_404(
-            Organization.objects.prefetch_related("services").all(), **filter_kwargs
+            Organization.objects.prefetch_related("services").all(), id=organization_id
         )
         return service, organization
 
