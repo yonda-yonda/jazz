@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, viewsets, serializers, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from account.models import Service, Organization, User, Membership
@@ -17,32 +18,38 @@ from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsU
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
-    lookup_url_kwarg = 'service_id'
 
 
 class OrganizationRetrieveView(viewsets.ReadOnlyModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
-    lookup_url_kwarg = "organization_id"
+    organization_pk = "pk"
 
     def get_permissions(self):
         premissions = (
-            permissions.IsAdminUser | getIsOrganizationAdmin("organization_id"),
+            permissions.IsAdminUser,
         )
         if self.action == "retrieve":
             premissions = (
-                permissions.IsAdminUser | getIsOrganizationMember("organization_id"),
+                permissions.IsAdminUser | getIsOrganizationMember(self.organization_pk),
             )
         return [permission() for permission in premissions]
 
 
 class OrganizationMemberViewSet(viewsets.ModelViewSet):
-    lookup_url_kwarg = 'user_id'
+    organization_pk = "organization_pk"
+    user_pk = "pk"
 
     def get_permissions(self):
-        premissions = (permissions.IsAdminUser | getIsOrganizationAdmin("organization_id"),)
+        premissions = (
+            permissions.IsAdminUser | getIsOrganizationAdmin(self.organization_pk),
+        )
         if self.action == 'retrieve':
-            premissions = (permissions.IsAdminUser | getIsOrganizationAdmin("organization_id") | getIsUserSelf("user_id"),)
+            premissions = (
+                permissions.IsAdminUser
+                | getIsOrganizationAdmin(self.organization_pk)
+                | getIsUserSelf(self.user_pk),
+            )
         return [permission() for permission in premissions]
 
     def get_serializer_class(self, *args, **kwargs):
@@ -54,14 +61,14 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
         return OrganizationMemberSerializer    
 
     def get_queryset(self):
-        organization_id = self.request.parser_context['kwargs']['organization_id']
+        organization_id = self.request.parser_context["kwargs"][self.organization_pk]
         queryset = User.objects.prefetch_related('membership', 'membership__organization').filter(membership__organization=organization_id)
         return queryset
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
-        organization_id = self.request.parser_context['kwargs']['organization_id']
+        organization_id = self.request.parser_context["kwargs"][self.organization_pk]
         user_id = input_serializer.data['id']
         role = input_serializer.data['role']
         try:
@@ -107,36 +114,46 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
 
 
 class OrganizationServiceViewSet(viewsets.GenericViewSet):
-    permission_classes = (
-        permissions.IsAdminUser
-        | getIsOrganizationAdmin("organization_id"),
-    )
-    queryset = Organization.objects.prefetch_related('services').all()
+    organization_pk = "organization_pk"
+    service_pk = "pk"
+
+    queryset = Service.objects.all()
     serializer_class = EmptySerializer
-    lookup_url_kwarg = 'organization_id'
 
-    def create(self, request, *args, **kwargs):
-        service_id = self.request.parser_context['kwargs']['service_id']
-        filter_kwargs = {'id': service_id}
-        service = generics.get_object_or_404(Service.objects.all(), **filter_kwargs)
+    def get_permissions(self):
+        premissions = (
+            permissions.IsAdminUser | getIsOrganizationAdmin(self.organization_pk),
+        )
+        return [permission() for permission in premissions]
 
-        organization = self.get_object()
+    def _get_model(self):
+        service = self.get_object()
+
+        organization_id = self.request.parser_context["kwargs"][self.organization_pk]
+        filter_kwargs = {"id": organization_id}
+        organization = generics.get_object_or_404(
+            Organization.objects.prefetch_related("services").all(), **filter_kwargs
+        )
+        return service, organization
+
+    @action(methods=["post"], detail=True)
+    def contract(self, request, *args, **kwargs):
+        service, organization = self._get_model()
+
         services = organization.services.all()
-        if services.filter(id=service_id).exists():
+        if services.filter(id=service.id).exists():
             return Response(status=status.HTTP_409_CONFLICT)
 
         organization.services.add(service)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def destroy(self, request, *args, **kwargs):
-        service_id = self.request.parser_context['kwargs']['service_id']
-        filter_kwargs = {'id': service_id}
-        service = generics.get_object_or_404(Service.objects.all(), **filter_kwargs)
+    @action(methods=["post"], detail=True)
+    def cancel(self, request, *args, **kwargs):
+        service, organization = self._get_model()
 
-        organization = self.get_object()
         services = organization.services.all()
-        if not services.filter(id=service_id).exists():
+        if not services.filter(id=service.id).exists():
             return Response(status=status.HTTP_409_CONFLICT)
 
         organization.services.remove(service)

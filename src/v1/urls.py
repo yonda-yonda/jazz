@@ -1,39 +1,22 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework_nested import routers
 
 from . import views 
 
+router = routers.SimpleRouter()
+router.register("services", views.ServiceViewSet)
+router.register("organizations", views.OrganizationRetrieveView)
+
+organization_router = routers.NestedSimpleRouter(router, "organizations",
+    lookup="organization")
+organization_router.register("members", views.OrganizationMemberViewSet, 
+    basename="organization-member")
+
+organization_router.register(
+    "services", views.OrganizationServiceViewSet, basename="organization-service"
+)
+
 urlpatterns = [
-    path("services/", views.ServiceViewSet.as_view({"get": "list"})),
-    path("services/<service_id>/", views.ServiceViewSet.as_view({"get": "retrieve"})),
-    path("organizations/", views.OrganizationRetrieveView.as_view({"get": "list"})),
-    path(
-        "organizations/<organization_id>/",
-        views.OrganizationRetrieveView.as_view({"get": "retrieve"}),
-    ),
-    path(
-        "organizations/<organization_id>/members/",
-        views.OrganizationMemberViewSet.as_view({"get": "list", "post": "create"}),
-    ),
-    path(
-        "organizations/<organization_id>/members/<user_id>/",
-        views.OrganizationMemberViewSet.as_view(
-            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
-        ),
-    ),
-    path(
-        "organizations/<organization_id>/services/<service_id>/contract/",
-        views.OrganizationServiceViewSet.as_view(
-            {
-                "post": "create",
-            }
-        ),
-    ),
-    path(
-        "organizations/<organization_id>/services/<service_id>/cancel/",
-        views.OrganizationServiceViewSet.as_view(
-            {
-                "post": "destroy",
-            }
-        ),
-    ),
+    path("", include(router.urls)),
+    path("", include(organization_router.urls)),
 ]

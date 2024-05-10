@@ -24,6 +24,7 @@ def getIsOrganizationMember(organization_pk):
 def getIsOrganizationAdmin(organization_pk):
     class IsOrganizationAdmin(permissions.BasePermission):
         def has_permission(self, request, view):
+            print(1111, request.parser_context["kwargs"])
             if isinstance(request.user, AnonymousUser): 
                 return False
             try:
