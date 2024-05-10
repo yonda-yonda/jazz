@@ -2,11 +2,12 @@ import uuid
 
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.contrib.auth.models import AbstractBaseUser,  PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+
 
 class Service(models.Model):
     class Meta:
-        db_table = 'service'
+        db_table = "service"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
@@ -14,9 +15,10 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+
 class Organization(models.Model):
     class Meta:
-        db_table = 'organization'
+        db_table = "organization"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
@@ -30,7 +32,7 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('Users must have an email address')
+            raise ValueError("Users must have an email address")
 
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
@@ -57,22 +59,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
 
     def __str__(self):
         return self.email
-    
+
 
 class Membership(models.Model):
     class Meta:
-        db_table = 'membership'
+        db_table = "membership"
 
-    ROLE = (
-        ('admin', '管理者'),
-    )
+    ROLE = (("admin", "管理者"),)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    role = models.CharField(max_length=16, choices=ROLE, null=True, 
-                            blank=True, default=None)
+    role = models.CharField(
+        max_length=16, choices=ROLE, null=True, blank=True, default=None
+    )

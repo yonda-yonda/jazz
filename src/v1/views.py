@@ -5,12 +5,12 @@ from rest_framework.response import Response
 from account.models import Service, Organization, User, Membership
 from .serializer import (
     ServiceSerializer,
-    OrganizationSerializer, 
-    OrganizationMemberSerializer, 
+    OrganizationSerializer,
+    OrganizationMemberSerializer,
     OrganizationMemberCreateSerializer,
     OrganizationMemberUpdateSerializer,
     MembershipSerializer,
-    EmptySerializer
+    EmptySerializer,
 )
 from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsUserSelf
 
@@ -26,9 +26,7 @@ class OrganizationRetrieveView(viewsets.ReadOnlyModelViewSet):
     organization_pk = "pk"
 
     def get_permissions(self):
-        premissions = (
-            permissions.IsAdminUser,
-        )
+        premissions = (permissions.IsAdminUser,)
         if self.action == "retrieve":
             premissions = (
                 permissions.IsAdminUser | getIsOrganizationMember(self.organization_pk),
@@ -44,7 +42,7 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
         premissions = (
             permissions.IsAdminUser | getIsOrganizationAdmin(self.organization_pk),
         )
-        if self.action == 'retrieve':
+        if self.action == "retrieve":
             premissions = (
                 permissions.IsAdminUser
                 | getIsOrganizationAdmin(self.organization_pk)
@@ -53,42 +51,45 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
         return [permission() for permission in premissions]
 
     def get_serializer_class(self, *args, **kwargs):
-        if self.action == 'create':
+        if self.action == "create":
             return OrganizationMemberCreateSerializer
-        if self.action in ['update', 'partial_update']:
+        if self.action in ["update", "partial_update"]:
             return OrganizationMemberUpdateSerializer
 
-        return OrganizationMemberSerializer    
+        return OrganizationMemberSerializer
 
     def get_queryset(self):
         organization_id = self.request.parser_context["kwargs"][self.organization_pk]
-        queryset = User.objects.prefetch_related('membership', 'membership__organization').filter(membership__organization=organization_id)
+        queryset = User.objects.prefetch_related(
+            "membership", "membership__organization"
+        ).filter(membership__organization=organization_id)
         return queryset
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         organization_id = self.request.parser_context["kwargs"][self.organization_pk]
-        user_id = input_serializer.data['id']
-        role = input_serializer.data['role']
+        user_id = input_serializer.data["id"]
+        role = input_serializer.data["role"]
         try:
-            user = User.objects.prefetch_related('membership').get(id=user_id)
+            user = User.objects.prefetch_related("membership").get(id=user_id)
         except User.DoesNotExist:
-            raise serializers.ValidationError('User dosen\'t exist.')
+            raise serializers.ValidationError("User dosen't exist.")
 
         try:
             if user.membership:
-                return Response({'message':'User already has membership to any organization.'}, status=status.HTTP_409_CONFLICT)
+                return Response(
+                    {"message": "User already has membership to any organization."},
+                    status=status.HTTP_409_CONFLICT,
+                )
         except Membership.DoesNotExist:
-            serializer = MembershipSerializer(data={'role':role, 'organization': organization_id, 'user': user_id})
+            serializer = MembershipSerializer(
+                data={"role": role, "organization": organization_id, "user": user_id}
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             headers = self.get_success_headers(serializer.data)
-            data = {
-                'id': user.id,
-                'email': user.email,
-                'role': role
-            }
+            data = {"id": user.id, "email": user.email, "role": role}
             return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     def destroy(self, request, *args, **kwargs):
@@ -99,17 +100,15 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
-        role = input_serializer.data['role']
+        role = input_serializer.data["role"]
 
         user = self.get_object()
-        serializer = MembershipSerializer(instance=user.membership, data={'role':role}, partial=True)
+        serializer = MembershipSerializer(
+            instance=user.membership, data={"role": role}, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        data = {
-            'id': user.id,
-            'email': user.email,
-            'role': role
-        }
+        data = {"id": user.id, "email": user.email, "role": role}
         return Response(data)
 
 
