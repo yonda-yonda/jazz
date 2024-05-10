@@ -11,7 +11,7 @@ from .serializer import (
     MembershipSerializer,
     EmptySerializer
 )
-from .permissions import IsOrganizationMember, IsOrganizationAdmin, IsUserSelf
+from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsUserSelf
 
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -21,15 +21,18 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class OrganizationRetrieveView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.IsAdminUser | IsOrganizationMember,)
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     lookup_url_kwarg = "organization_id"
 
     def get_permissions(self):
-        premissions = (permissions.IsAdminUser,)
+        premissions = (
+            permissions.IsAdminUser | getIsOrganizationAdmin("organization_id"),
+        )
         if self.action == "retrieve":
-            premissions = (permissions.IsAdminUser | IsOrganizationAdmin,)
+            premissions = (
+                permissions.IsAdminUser | getIsOrganizationMember("organization_id"),
+            )
         return [permission() for permission in premissions]
 
 
@@ -37,9 +40,9 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
     lookup_url_kwarg = 'user_id'
 
     def get_permissions(self):
-        premissions = (permissions.IsAdminUser | IsOrganizationAdmin,)
+        premissions = (permissions.IsAdminUser | getIsOrganizationAdmin("organization_id"),)
         if self.action == 'retrieve':
-            premissions = (permissions.IsAdminUser | IsOrganizationAdmin | IsUserSelf,)
+            premissions = (permissions.IsAdminUser | getIsOrganizationAdmin("organization_id") | getIsUserSelf("user_id"),)
         return [permission() for permission in premissions]
 
     def get_serializer_class(self, *args, **kwargs):
@@ -104,7 +107,10 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
 
 
 class OrganizationServiceViewSet(viewsets.GenericViewSet):
-    permission_classes = (permissions.IsAdminUser | IsOrganizationMember,)
+    permission_classes = (
+        permissions.IsAdminUser
+        | getIsOrganizationAdmin("organization_id"),
+    )
     queryset = Organization.objects.prefetch_related('services').all()
     serializer_class = EmptySerializer
     lookup_url_kwarg = 'organization_id'
