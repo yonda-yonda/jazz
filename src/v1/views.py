@@ -17,9 +17,10 @@ from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsU
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 
-class OrganizationRetrieveView(viewsets.ReadOnlyModelViewSet):
+class OrganizationRetrieveViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     organization_pk = "pk"

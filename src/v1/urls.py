@@ -5,7 +5,7 @@ from . import views
 
 router = routers.SimpleRouter()
 router.register("services", views.ServiceViewSet)
-router.register("organizations", views.OrganizationRetrieveView)
+router.register("organizations", views.OrganizationRetrieveViewSet)
 
 organization_router = routers.NestedSimpleRouter(
     router, "organizations", lookup="organization"
