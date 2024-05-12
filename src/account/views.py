@@ -3,6 +3,8 @@ from django.contrib.auth import login, logout, authenticate
 from rest_framework import viewsets, permissions, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+
 
 from .serializer import LoginSerializer
 
@@ -32,4 +34,22 @@ class AuthViewSet(viewsets.ViewSet):
     @action(methods=["post"], detail=False)
     def logout(self, request, *args, **kwargs):
         logout(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TokenViewSet(
+    viewsets.ViewSet,
+):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        token, _ = Token.objects.update_or_create(user=request.user)
+        print(token)
+        return Response({"token": token.key, "created": token.created})
+
+    @action(methods=["delete"], detail=False)
+    def delete(self, request, *args, **kwargs):
+        token, _ = Token.objects.get_or_create(user=request.user)
+        token.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)

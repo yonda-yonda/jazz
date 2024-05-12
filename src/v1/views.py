@@ -1,6 +1,14 @@
-from rest_framework import generics, permissions, viewsets, serializers, status
+from rest_framework import (
+    authentication,
+    generics,
+    permissions,
+    viewsets,
+    serializers,
+    status,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.authentication import TokenAuthentication
 
 from account.models import Service, Organization, User, Membership
 from .serializer import (
@@ -13,14 +21,21 @@ from .serializer import (
 )
 from .permissions import getIsOrganizationMember, getIsOrganizationAdmin, getIsUserSelf
 
+authentication_classes = (
+    authentication.TokenAuthentication,
+    authentication.SessionAuthentication,
+)
+
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = authentication_classes
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
 
 class OrganizationRetrieveViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = authentication_classes
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     organization_pk = "pk"
@@ -35,6 +50,7 @@ class OrganizationRetrieveViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class OrganizationMemberViewSet(viewsets.ModelViewSet):
+    authentication_classes = authentication_classes
     organization_pk = "organization_pk"
     user_pk = "pk"
 
@@ -113,6 +129,7 @@ class OrganizationMemberViewSet(viewsets.ModelViewSet):
 
 
 class OrganizationServiceViewSet(viewsets.ViewSet):
+    authentication_classes = authentication_classes
     organization_pk = "organization_pk"
     service_pk = "pk"
 
